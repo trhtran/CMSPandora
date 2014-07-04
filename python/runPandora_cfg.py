@@ -56,7 +56,7 @@ process.pandorapfanew = cms.EDAnalyzer('runPandora',
 #    inputconfigfile = cms.string('PandoraSettingsBasic_WithoutMonitoring.xml'),
 #    inputconfigfile = cms.string('PandoraSettingsMuon.xml'),
 
-    calibrParFile = cms.string('pandoraCalibrPars.txt'),
+    calibrParFile = cms.string('pandoraCalibrPars.test.txt'),
     outputFile = cms.string('pandoraoutput.root')
 
 )
