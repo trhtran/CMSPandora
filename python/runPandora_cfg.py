@@ -32,11 +32,12 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
 #process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10) )
 
-process.EveService = cms.Service("EveService")
+#process.EveService = cms.Service("EveService")
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-        'file:/afs/cern.ch/work/t/trtran/slc5/testAbsCorr/CMSSW_6_2_0_SLHC14/sim/gamma/eta2/Pt10/step3.root'
+#        'file:/afs/cern.ch/work/t/trtran/slc5/testAbsCorr/CMSSW_6_2_0_SLHC14/sim/kaon0L/first/step3.root'
+        'file:/afs/cern.ch/work/t/trtran/slc5/testAbsCorr/CMSSW_6_2_0_SLHC14/sim/gamma/eta2/Pt35/100.0/step3.root'
 #        'file:/afs/cern.ch/work/t/trtran/slc5/detidfix/CMSSW_6_2_0_SLHC14/SIM/first/step3.root'
 #        'file:/afs/cern.ch/work/t/trtran/slc5/testAbsCorr/CMSSW_6_2_0_SLHC14/sim/muon/eta1.5-3/first/step3.root'
     )
@@ -58,8 +59,6 @@ process.pandorapfanew = cms.EDAnalyzer('runPandora',
 
     calibrParFile = cms.string('pandoraCalibrPars.test.txt'),
     outputFile = cms.string('pandoraoutput.root')
-
 )
-
 
 process.p = cms.Path(process.pandorapfanew)

@@ -1,13 +1,37 @@
-Calibr_ADC2GeV_EE 0.00012
-Calibr_ADC2GeV_HEF 0.000176
-Calibr_ADC2GeV_HEB 0.003108
+Calibr_ADC2GeV_EE  1.3775e-05
+Calibr_ADC2GeV_HEF 2.125e-05
+Calibr_ADC2GeV_HEB 0.0003746
 
-#threshold in GeV
-ECalThresEndCap 27.55e-5
-HCalThresEndCapHEF 42.50e-5
-HCalThresEndCapHEB 742.2e-5
-ECalThresBarrel 0.
-HCalThresBarrel 0.
+##wrong 0.45 mip
+#Calibr_ADC2GeV_EE 0.000012
+#Calibr_ADC2GeV_HEF 0.0000176
+#Calibr_ADC2GeV_HEB 0.0003108
+
+
+# #threshold in GeV
+# cut a bit higher, since default values are exactly at 0.5mip
+# and Calibr_ADC2GeV_xx already rounded ...
+ECalThresEndCap 27.65e-6
+HCalThresEndCapHEF 42.60e-6
+HCalThresEndCapHEB 750.3e-6
+ECalThresBarrel 10000.
+HCalThresBarrel 10000.
+
+
+# ok # #threshold in GeV
+# ok ECalThresEndCap 27.55e-6
+# ok HCalThresEndCapHEF 42.50e-6
+# ok HCalThresEndCapHEB 742.2e-6
+# ok ECalThresBarrel 0.
+# ok HCalThresBarrel 0.
+
+# #threshold in GeV
+#ECalThresEndCap 0.
+#HCalThresEndCapHEF 0.0
+#HCalThresEndCapHEB 0.0
+#ECalThresBarrel 0.
+#HCalThresBarrel 0.
+
 
 # mip thresholds ----------
 #SubDet | MIP / keV | LSB / MIP
@@ -15,16 +39,16 @@ HCalThresBarrel 0.
 #HEF | 85.0 | 0.25
 #HEB | 1498.4  | 0.25
 
-ECalMipThresEndCap 5
+ECalMipThresEndCap 0.5
 HCalMipThresEndCapHEF 0.5
 HCalMipThresEndCapHEB 0.5
 ECalMipThresBarrel 0.5
 HCalMipThresBarrel 0.5
 
 # mip calibration -----------
-ECalToMipEndCap 1814.88
-HCalToMipEndCapHEF 1176.47
-HCalToMipEndCapHEB 66.7379
+ECalToMipEndCap 18148.82
+HCalToMipEndCapHEF 11764.71
+HCalToMipEndCapHEB 667.38
 HCalToMipBarrel 3.333333
 ECalToMipBarrel 3.333333
 

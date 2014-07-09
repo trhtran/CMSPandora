@@ -133,9 +133,13 @@ private:
   TH1F * Energy_res;
 
   TH1F * h_sumPfoE;
+  TH1F * h_sumPfoEEM;
+  TH1F * h_sumPfoEHad;
   TH1F * h_nbPFOs;
 
   TH1F * h_sumCaloE;
+  TH1F * h_sumCaloEM;
+  TH1F * h_sumCaloHad;
   TH1F * h_MIP_EE ;
   TH1F * h_MIP_HEF;
   TH1F * h_MIP_HEB;
@@ -144,13 +148,21 @@ private:
   TH1F * h_MIP_Corr_HEB;
 
 
-  TH2F * h2_hcalEecalE;
+  TH2F * h2_Calo_EM_hcalEecalE;
+  TH2F * h2_Calo_Had_hcalEecalE;
+
+  TH2F * h2_EM_hcalEecalE;
+  TH2F * h2_Had_hcalEecalE;
 
 
 
   float m_Calibr_ADC2GeV_EE     ;
   float m_Calibr_ADC2GeV_HEF    ;
   float m_Calibr_ADC2GeV_HEB    ;
+
+  float m_addCalibrEE ;
+  float m_addCalibrHEF;
+  float m_addCalibrHEB;
 
   float m_hCalThresBarrel       ;
   float m_hCalThresEndCapHEF    ;

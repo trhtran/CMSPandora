@@ -182,6 +182,9 @@ void runPandora::initPandoraCalibrParameters()
    m_Calibr_ADC2GeV_HEF = 0.0000176; //w/o absorber thickness correction
    m_Calibr_ADC2GeV_HEB = 0.0003108; //w/o absorber thickness correction
 
+   m_addCalibrEE = 10.;
+   m_addCalibrHEF= 10.;
+   m_addCalibrHEB= 10.;
 
    m_eCalThresBarrel    = 0.;
    m_eCalThresEndCap    = 27.55e-6; //EE
@@ -246,6 +249,10 @@ void runPandora::readCalibrParameterFile()
       if (paraName=="Calibr_ADC2GeV_EE"     ) {m_Calibr_ADC2GeV_EE       = paraValue; std::cout <<  m_Calibr_ADC2GeV_EE     << std::endl;}
       if (paraName=="Calibr_ADC2GeV_HEF"    ) {m_Calibr_ADC2GeV_HEF      = paraValue; std::cout <<  m_Calibr_ADC2GeV_HEF    << std::endl;}
       if (paraName=="Calibr_ADC2GeV_HEB"    ) {m_Calibr_ADC2GeV_HEB      = paraValue; std::cout <<  m_Calibr_ADC2GeV_HEB    << std::endl;}
+
+      if (paraName=="addCalibrEE"    ) {m_addCalibrEE = paraValue; std::cout <<  m_addCalibrEE << std::endl;}
+      if (paraName=="addCalibrHEF"   ) {m_addCalibrHEF= paraValue; std::cout <<  m_addCalibrHEF<< std::endl;}
+      if (paraName=="addCalibrHEB"   ) {m_addCalibrHEB= paraValue; std::cout <<  m_addCalibrHEB<< std::endl;}
 
       if (paraName=="ECalThresBarrel"       ) {m_eCalThresBarrel         = paraValue; std::cout <<  m_eCalThresBarrel       << std::endl;}
       if (paraName=="ECalThresEndCap"       ) {m_eCalThresEndCap         = paraValue; std::cout <<  m_eCalThresEndCap       << std::endl;}
@@ -962,6 +969,12 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
   double sumCaloEnergy = 0.;
   double sumCaloEnergyEM = 0.;
   double sumCaloEnergyHAD = 0.;
+  double sumCaloECALEnergyEM = 0.;
+  double sumCaloHCALEnergyEM  = 0.;
+  double sumCaloECALEnergyHAD= 0.;
+  double sumCaloHCALEnergyHAD = 0.;
+
+
 
   // 
   // Process ECAL barrel rechits 
@@ -1062,8 +1075,11 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
     }
 
     sumCaloEnergy += energy;
-    sumCaloEnergyEM += energy  ;//* absorberCorrectionEM;
-    sumCaloEnergyHAD += energy ;//* absorberCorrectionHAD;
+    sumCaloEnergyEM += energy  ;//FIXME * absorberCorrectionEM;
+    sumCaloEnergyHAD += energy ;//FIXME * absorberCorrectionHAD;
+    sumCaloECALEnergyEM  += energy  ;//* absorberCorrectionEM;
+    sumCaloECALEnergyHAD += energy  ;//* absorberCorrectionHAD;
+
     caloHitParameters.m_hadronicEnergy = m_eCalToHadGeVBarrel * energy; // = energy; 
     caloHitParameters.m_layer = 1.;//PFLayer::ECAL_BARREL;
     caloHitParameters.m_nCellRadiationLengths = 0.0; // 6.;
@@ -1165,6 +1181,9 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
     sumCaloEnergy += energy;
     sumCaloEnergyEM  += energy;// * absorberCorrectionEM ;
     sumCaloEnergyHAD += energy;// * absorberCorrectionHAD;
+    sumCaloHCALEnergyEM  += energy  ;//* absorberCorrectionEM;
+    sumCaloHCALEnergyHAD += energy  ;//* absorberCorrectionHAD;
+
 
     caloHitParameters.m_hadronicEnergy = m_hCalToHadGeVBarrel * energy; // = energy; 
 
@@ -1189,6 +1208,7 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
     //double energy = eerh->energy();
     double energy = eerh->energy() * m_Calibr_ADC2GeV_EE;
     if (energy<m_eCalThresEndCap) continue;
+    energy *= m_addCalibrEE; //this must be after threshold rejection
     double time = eerh->time();
 
     float nCellInteractionLengths = 0.;
@@ -1283,7 +1303,7 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
     caloHitParameters.m_detectorRegion = pandora::ENDCAP;
     caloHitParameters.m_inputEnergy = energy;
     caloHitParameters.m_electromagneticEnergy = m_eCalToEMGeVEndCap * energy * absorberCorrectionEM; 
-    caloHitParameters.m_mipEquivalentEnergy =  m_eCalToMipEndCap * energy; // = energy; // HTAN 0 NS AP  
+    caloHitParameters.m_mipEquivalentEnergy =  m_eCalToMipEndCap * energy / m_addCalibrEE; // = energy; // HTAN 0 NS AP  
     
     float angleCorrectionMIP(1.);
     float hitR = distToFrontFace; 
@@ -1299,6 +1319,9 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
     sumCaloEnergy    += energy;
     sumCaloEnergyEM  += energy * absorberCorrectionEM ;
     sumCaloEnergyHAD += energy * absorberCorrectionHAD;
+    sumCaloECALEnergyEM  += energy  * absorberCorrectionEM;
+    sumCaloECALEnergyHAD += energy  * absorberCorrectionHAD;
+
 
 
     caloHitParameters.m_hadronicEnergy = m_eCalToHadGeVEndCap * energy * absorberCorrectionHAD;
@@ -1341,6 +1364,7 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
     double energy = hefrh->energy() * m_Calibr_ADC2GeV_HEF;
     if (energy<m_hCalThresEndCapHEF)
        continue;
+    energy *= m_addCalibrHEF;
     double time = hefrh->time();
 
     float nCellInteractionLengths = 0.;
@@ -1431,7 +1455,7 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
     caloHitParameters.m_detectorRegion = pandora::ENDCAP;
     caloHitParameters.m_inputEnergy = energy;
     caloHitParameters.m_electromagneticEnergy = m_hCalToEMGeVEndCapHEF * energy; 
-    caloHitParameters.m_mipEquivalentEnergy =  m_hCalToMipEndCapHEF * energy; // = energy; // HTAN 0 NS AP  
+    caloHitParameters.m_mipEquivalentEnergy =  m_hCalToMipEndCapHEF * energy / m_addCalibrHEF; // = energy; // HTAN 0 NS AP  
 
     h_MIP_HEF->Fill(caloHitParameters.m_mipEquivalentEnergy.Get());
     float angleCorrectionMIP(1.);
@@ -1447,6 +1471,9 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
     sumCaloEnergy += energy;
     sumCaloEnergyEM  += energy * absorberCorrectionEM ;
     sumCaloEnergyHAD += energy * absorberCorrectionHAD;
+    sumCaloHCALEnergyEM  += energy  * absorberCorrectionEM;
+    sumCaloHCALEnergyHAD += energy  * absorberCorrectionHAD;
+
 
 
     caloHitParameters.m_hadronicEnergy = m_hCalToHadGeVEndCapHEF * energy ; // = energy; 
@@ -1483,6 +1510,7 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
     const HGCHEDetId& detid = hebrh->id();
     double energy = hebrh->energy() * m_Calibr_ADC2GeV_HEB;
     if (energy<m_hCalThresEndCapHEB) continue;
+    energy *= m_addCalibrHEB;
     double time = hebrh->time();
     float nCellInteractionLengths = 0.;
     float nCellRadiationLengths = 0.;
@@ -1573,7 +1601,7 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
     caloHitParameters.m_detectorRegion = pandora::ENDCAP;
     caloHitParameters.m_inputEnergy = energy;
     caloHitParameters.m_electromagneticEnergy = m_hCalToEMGeVEndCapHEB * energy; 
-    caloHitParameters.m_mipEquivalentEnergy = m_hCalToMipEndCapHEB * energy; // = energy; // HTAN 0 NS AP  
+    caloHitParameters.m_mipEquivalentEnergy = m_hCalToMipEndCapHEB * energy / m_addCalibrHEB; // = energy; // HTAN 0 NS AP  
     h_MIP_HEB->Fill(caloHitParameters.m_mipEquivalentEnergy.Get());
     if (caloHitParameters.m_mipEquivalentEnergy.Get() < m_hCalMipThresEndCapHEB) {
        //std::cout << "HEB MIP threshold rejected" << std::endl;
@@ -1582,6 +1610,8 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
     sumCaloEnergy += energy;
     sumCaloEnergyEM  += energy * absorberCorrectionEM ;
     sumCaloEnergyHAD += energy * absorberCorrectionHAD;
+    sumCaloHCALEnergyEM  += energy  * absorberCorrectionEM;
+    sumCaloHCALEnergyHAD += energy  * absorberCorrectionHAD;
 
 
     caloHitParameters.m_hadronicEnergy = m_hCalToHadGeVEndCapHEB * energy; // = energy; 
@@ -1608,6 +1638,12 @@ void runPandora::prepareHits( edm::Handle<EcalRecHitCollection> ecalRecHitHandle
   }
 
   h_sumCaloE->Fill(sumCaloEnergy);
+  h_sumCaloEM->Fill(sumCaloEnergyEM);
+  h_sumCaloHad->Fill(sumCaloEnergyHAD);
+
+  h2_Calo_EM_hcalEecalE->Fill(sumCaloECALEnergyEM, sumCaloHCALEnergyEM);
+  h2_Calo_Had_hcalEecalE->Fill(sumCaloECALEnergyHAD, sumCaloHCALEnergyHAD);
+
   std::cout << "sumCaloEnergy = " << sumCaloEnergy << std::endl;
   std::cout << "sumCaloEnergyEM  = " << sumCaloEnergyEM  << std::endl;
   std::cout << "sumCaloEnergyHAD = " << sumCaloEnergyHAD << std::endl;
@@ -1759,8 +1795,11 @@ void runPandora::preparePFO(const edm::Event& iEvent, const edm::EventSetup& iSe
 
   std::cout << "Starting reading PFOs" << std::endl;
   float _sumPFOEnergy(0.);
-  double sumClustEcalE(0.); //PFO cluster energy in Ecal
-  double sumClustHcalE(0.); //PFO cluster energy in Hcal
+  double sumClustEMEcalE(0.); //PFO cluster energy in Ecal
+  double sumClustEMHcalE(0.); //PFO cluster energy in Hcal
+  double sumClustHADEcalE(0.); //PFO cluster energy in Ecal
+  double sumClustHADHcalE(0.); //PFO cluster energy in Hcal
+
   int nbPFOs(0);
   for (pandora::PfoList::const_iterator itPFO = pPfoList->begin(), itPFOEnd = pPfoList->end(); itPFO != itPFOEnd; ++itPFO){
     nbPFOs++;
@@ -1789,34 +1828,76 @@ void runPandora::preparePFO(const edm::Event& iEvent, const edm::EventSetup& iSe
 
       std::cout << "# of hits in cluster " << nHitsInCluster << std::endl; 
       
-      const pandora::CaloHitAddressList &caloHitAddressList(*itCluster);
+      //const pandora::CaloHitAddressList &caloHitAddressList(*itCluster);
 
+      //EcalRecHit * hgcrh = NULL;
+      //HBHERecHit * hrh = NULL;
 
-      //test
-      int nbNonEHcalHit = 0;
+      
+      //int nbNonEHcalHit = 0;
+      for (unsigned int iHit = 0; iHit < nHitsInCluster; ++iHit)
+      {
 
-      for (pandora::CaloHitAddressList::const_iterator hIter = caloHitAddressList.begin(), hIterEnd = caloHitAddressList.end(); hIter != hIterEnd; ++hIter){
-	
-	pandora::CaloHit * ch = (pandora::CaloHit *) (*hIter);
-	EcalRecHit * hgcrh = NULL;
-	HBHERecHit * hrh = NULL;
+         const HGCRecHit *hgcHit = (HGCRecHit*)((*itCluster)[iHit]);
+         //const HGCEEDetId& detidEE = hgcHit->id();
+         float nCellInteractionLengths = 0.;
+         float nCellRadiationLengths = 0.;
+         float absorberCorrectionEM = 1.;
+         float absorberCorrectionHAD = 1.;
 
-	if (ch->GetHitType() ==  pandora::ECAL) { 
-	  hgcrh = (EcalRecHit *) (*hIter);
-	  std::cout << "EcalRecHit energy " << hgcrh->energy() <<  std::endl;
-     sumClustEcalE += hgcrh->energy();
-	} else if (ch->GetHitType() ==  pandora::HCAL) {  
-	  hrh = (HBHERecHit *) (*hIter); 
-	  std::cout << "HcalRecHit energy " << hrh->energy() <<  std::endl;		  
-     sumClustHcalE += hrh->energy();
-	}
-	else {
-	  std::cout << " No ECAL or HCAL??? What is this? " << ch->GetHitType() << std::endl;
-      nbNonEHcalHit++;
-	}
-	
+         const DetId& detid = hgcHit->id();
+         if (!detid)
+            continue;
+
+         //const HGCHEDetId& detidHE = hgcHit->id();
+
+         ForwardSubdetector thesubdet = (ForwardSubdetector)detid.subdetId();
+         //ForwardSubdetector thesubdetHE = (ForwardSubdetector)detidHE.subdetId();
+         if (thesubdet == 3) {
+            int layer = (int) ((HGCEEDetId)(detid)).layer() ;
+            getLayerPropertiesEE(hgcHit, layer,
+                  nCellInteractionLengths, nCellRadiationLengths,
+                  absorberCorrectionEM, absorberCorrectionHAD);
+            sumClustEMEcalE += hgcHit->energy() * m_Calibr_ADC2GeV_EE * m_eCalToEMGeVEndCap * absorberCorrectionEM * m_addCalibrEE;
+            sumClustHADEcalE += hgcHit->energy() * m_Calibr_ADC2GeV_EE * m_eCalToEMGeVEndCap * absorberCorrectionHAD * m_addCalibrEE;
+         }
+         else if (thesubdet == 4) {
+            sumClustEMHcalE += hgcHit->energy() * m_Calibr_ADC2GeV_HEF * m_hCalToEMGeVEndCapHEF * absorberCorrectionEM * m_addCalibrHEF;
+            sumClustHADHcalE += hgcHit->energy() * m_Calibr_ADC2GeV_HEF * m_hCalToHadGeVEndCapHEF * absorberCorrectionEM * m_addCalibrHEF;
+         }
+         else if (thesubdet == 5) {
+            sumClustEMHcalE += hgcHit->energy() * m_Calibr_ADC2GeV_HEB * m_hCalToEMGeVEndCapHEB * absorberCorrectionEM * m_addCalibrHEB;
+            sumClustHADHcalE += hgcHit->energy() * m_Calibr_ADC2GeV_HEB * m_hCalToEMGeVEndCapHEB * absorberCorrectionEM * m_addCalibrHEB;
+         }
+         else {
+         }
+
+         //std::cout << "TEST ecal energy: " << sumClustEcalE << std::endl;
+         //std::cout << "TEST hcal energy: " << sumClustHcalE << std::endl;
       }
-      std::cout << "nbNonEHcalHit: " << nbNonEHcalHit << std::endl;
+
+//      for (pandora::CaloHitAddressList::const_iterator hIter = caloHitAddressList.begin(), hIterEnd = caloHitAddressList.end(); hIter != hIterEnd; ++hIter){
+	
+//	pandora::CaloHit * ch = (pandora::CaloHit *) (*hIter);
+//	EcalRecHit * hgcrh = NULL;
+//	HBHERecHit * hrh = NULL;
+//
+//	if (ch->GetHitType() ==  pandora::ECAL) { 
+//	  hgcrh = (EcalRecHit *) (*hIter);
+//	  std::cout << "EcalRecHit energy " << hgcrh->energy() <<  std::endl;
+//     sumClustEcalE += hgcrh->energy();
+//	} else if (ch->GetHitType() ==  pandora::HCAL) {  
+//	  hrh = (HBHERecHit *) (*hIter); 
+//	  std::cout << "HcalRecHit energy " << hrh->energy() <<  std::endl;		  
+//     sumClustHcalE += hrh->energy();
+//	}
+//	else {
+//	  std::cout << " No ECAL or HCAL??? What is this? " << ch->GetHitType() << std::endl;
+//      nbNonEHcalHit++;
+//	}
+	
+//      }
+//      std::cout << "nbNonEHcalHit: " << nbNonEHcalHit << std::endl;
  
 
       // for (unsigned int iHit = 0; iHit < nHitsInCluster; ++iHit){
@@ -1835,8 +1916,11 @@ void runPandora::preparePFO(const edm::Event& iEvent, const edm::EventSetup& iSe
 
   }
 
-  h2_hcalEecalE->Fill(sumClustEcalE,sumClustHcalE);
+  h2_EM_hcalEecalE->Fill(sumClustEMEcalE,sumClustEMHcalE);
+  h2_Had_hcalEecalE->Fill(sumClustHADEcalE,sumClustHADHcalE);
   h_sumPfoE->Fill(_sumPFOEnergy);
+  //h_sumPfoEEM->Fill(_sumPFOEnergyEM);
+  //h_sumPfoEHad->Fill(_sumPFOEnergyHad);
   h_nbPFOs->Fill(nbPFOs);
 
 	
@@ -1913,10 +1997,18 @@ void runPandora::beginJob()
   Egenpart = new TH1F("TH1GenParticlesEnergy","Energy of Generated Particles",1000,0.,1000.);
   Energy_res = new TH1F("TH1RES","#Delta E / E ",100,-2.,2.);
 
-  h_sumCaloE = new TH1F("sumCaloE","sum hit E in Calos",1000,0,100);
+  h_sumCaloE = new TH1F("sumCaloE","sum hit E in Calos",1000,0,200);
+  h_sumCaloEM = new TH1F("sumCaloEM","sum hit E in Calos",1000,0,200);
+  h_sumCaloHad = new TH1F("sumCaloHad","sum hit E in Calos",1000,0,200);
   h_sumPfoE = new TH1F("hsumPfoE","sumPFOenergy",1000,0.,1000.);
   h_nbPFOs = new TH1F("hnbPfos","nb of rec PFOs",30,0.,30.);
-  h2_hcalEecalE = new TH2F("hcalEecalE","",400,0,400,400,0,400);
+
+  h2_Calo_EM_hcalEecalE = new TH2F("CalohcalEecalEem","",1000,0,200,1000,0,200);
+  h2_Calo_Had_hcalEecalE = new TH2F("CalohcalEecalEhad","",1000,0,200,1000,0,200);
+
+
+  h2_EM_hcalEecalE = new TH2F("hcalEecalEem","",400,0,40,400,0,40);
+  h2_Had_hcalEecalE = new TH2F("hcalEecalEhad","",400,0,40,400,0,40);
 
   h_MIP_EE  = new TH1F("MIPEE" ,"Mip in EE ",1000,0,10);
   h_MIP_HEF = new TH1F("MIPHEF","Mip in HEF",1000,0,10);
